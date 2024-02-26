@@ -4,12 +4,12 @@ Created on Sat Feb 24 03:19:33 2024
 
 @author: CC-i7-11700
 """
-import torch, random
+import torch
 from torch import nn
 from torch.utils import data
-from matplotlib import pyplot as plt
 
-# 生成数据集
+# 生成 & 读取数据集
+# 3.3.1  生成数据集
 def synthetic_data(w, b, num_examples):
     """生成y=Xw+b+噪声"""
     X = torch.normal(0, 1, (num_examples, len(w)))
@@ -17,50 +17,73 @@ def synthetic_data(w, b, num_examples):
     y += torch.normal(0, 0.01, y.shape)
     return X, y.reshape((-1, 1))
 
+
 true_w = torch.tensor([2, -3.4])
 true_b = 4.2
 features, labels = synthetic_data(true_w, true_b, 1000)
 
-print(features.size())
-print(labels.size())
-# plt.scatter(features[:, (1)].detach().numpy(), labels.detach().numpy(), 1)
-
-# 读取数据集
+# 3.3.2  读取数据集
 batch_size = 10
-data_iter = data.DataLoader(data.TensorDataset(features, labels), batch_size=batch_size, shuffle=True)
-X, y = next(iter(data_iter))
-print("X =\n", X)
-print("y =\n", y)
+data_iter = data.DataLoader(data.TensorDataset(features, labels),
+                            batch_size=batch_size,
+                            shuffle=True) # 是否希望数据迭代器对象在每个迭代周期内打乱数据
+# X, y = next(iter(data_iter))
 
-# 定义模型
+# --------------------------------------------------------------------------- #
+
+# 2. 定义模型
+
+# # 3.2.3  初始化模型参数
+# w = torch.normal(0, 0.01, size=(2,1), requires_grad=True)
+# b = torch.zeros(1, requires_grad=True)
+# # 3.2.4  定义模型
+# def linreg(X, w, b):
+#     """线性回归模型"""
+#     return torch.matmul(X, w) + b
+
+
 net = nn.Sequential(nn.Linear(2, 1))
-print(net)
 
-# 参数初始化
-"""
-1. 通过`net[0]`选择网络中的第一个图层
-2. 使用`weight.data`和`bias.data`方法访问参数
-3. 使用替换方法`normal_`和`fill_`来重写参数值
-"""
-print(net[0].weight.data)
-print(net[0].bias.data)
-print(net[0].weight.data.normal_(0, 0.01))
-print(net[0].bias.data.fill_(1))
+# # 参数初始化
+# """
+# 1. 通过`net[0]`选择网络中的第一个图层
+# 2. 使用`weight.data`和`bias.data`方法访问参数
+# 3. 使用替换方法`normal_`和`fill_`来重写参数值
+# """
+# print(net[0].weight.data)
+# print(net[0].bias.data)
+# print(net[0].weight.data.normal_(0, 0.01))
+# print(net[0].bias.data.fill_(1))
 
-# 验证模型和初始化参数
-y_hat = torch.matmul(X, net[0].weight.data.T) + net[0].bias.data
-print(torch.equal(y_hat, net(X)))
+# --------------------------------------------------------------------------- #
 
-# 损失函数
+
+# 3.损失函数
+
+# 3.2.5  定义损失函数
+def squared_loss(y_hat, y):
+    """均方损失"""
+    return (y_hat - y.reshape(y_hat.shape)) ** 2 / 2
+
+# 3.3.5  定义损失函数
 loss = nn.MSELoss()
 
-# 验证损失函数值
-torch.sum((y_hat - y) ** 2)/y.numel()
-loss(net(X) ,y)
+# --------------------------------------------------------------------------- #
 
 # 优化算法
-"""待优化的参数可通过net.parameters()获得"""
-trainer = torch.optim.SGD(net.parameters(), lr=0.03)
+
+# 3.2.6  定义优化算法
+def trainer(params, lr, batch_size):
+    """小批量随机梯度下降"""
+    with torch.no_grad():
+        for param in params:
+            param -= lr * param.grad / batch_size
+            param.grad.zero_()
+
+
+# # 3.3.6  定义优化算法
+# """待优化的参数可通过net.parameters()获得"""
+# trainer = torch.optim.SGD(net.parameters(), lr=0.03)
 
 # 训练
 num_epochs = 3
@@ -68,15 +91,15 @@ for epoch in range(num_epochs):
     if isinstance(net, torch.nn.Module):
         net.train()         # 将模型设置为训练模式
     for X, y in data_iter:
-        l = loss(net(X) ,y) # 计算损失函数loss（前向传播）
+        l = loss(net(X) ,y) # 计算损失函数loss(前向传播)
         trainer.zero_grad()
-        l.backward()        # 进行反向传播来计算梯度
-        trainer.step()      # 用优化器来更新模型参数
+        l.backward()        # 反向传播计算梯度
+        trainer.step()      # 使用优化器更新模型参数
     
     if isinstance(net, torch.nn.Module):
         net.eval()          # 将模型设置为评估模式
     with torch.no_grad():
-        l = loss(net(features), labels)
+        l = loss(net(features), labels) # 监控训练过程
         print(f'epoch {epoch + 1}, loss {l:f}')
 
 w = net[0].weight.data

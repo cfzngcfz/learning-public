@@ -122,7 +122,7 @@ def evaluate_accuracy(net, data_iter):
     return metric[0] / metric[1]            # 返回测试集的分类准确率
 
 # source: 3.6.6 训练
-def train_epoch_ch3(net, train_iter, loss, updater):
+def train_epoch_ch3(net, train_iter, loss, trainer):
     """训练模型一个迭代周期"""
     if isinstance(net, torch.nn.Module):
         net.train()                         # 将模型设置为训练模式
@@ -131,25 +131,25 @@ def train_epoch_ch3(net, train_iter, loss, updater):
         # 计算梯度并更新参数
         y_hat = net(X)
         l = loss(y_hat, y)                  # 计算损失函数loss(前向传播)
-        if isinstance(updater, torch.optim.Optimizer):
+        if isinstance(trainer, torch.optim.Optimizer):
             # 使用PyTorch内置的优化器和损失函数
-            updater.zero_grad()             # 梯度清零
+            trainer.zero_grad()             # 梯度清零
             l.mean().backward()             # 反向传播计算梯度
-            updater.step()                  # 用优化器更新模型参数
+            trainer.step()                  # 用优化器更新模型参数
         else:
             # 使用定制的优化器和损失函数
             l.sum().backward()
-            updater(X.shape[0])
+            trainer(X.shape[0])
         metric.add(float(l.sum()),          # 训练损失总和
                    accuracy(y_hat, y),      # 训练准确度总和
                    y.numel())               # 样本数
     # 返回训练损失和训练精度
     return metric[0] / metric[2], metric[1] / metric[2] # 返回训练集的平均损失和分类准确率
 
-def train_ch3(net, train_iter, test_iter, loss, num_epochs, updater):
+def train_ch3(net, train_iter, test_iter, loss, num_epochs, trainer):
     """训练模型"""
     for epoch in range(num_epochs):
-        train_metrics = train_epoch_ch3(net, train_iter, loss, updater) # 训练模型
+        train_metrics = train_epoch_ch3(net, train_iter, loss, trainer) # 训练模型
         test_acc = evaluate_accuracy(net, test_iter)                    # 评估模型
         print(train_metrics)
         print(test_acc)
