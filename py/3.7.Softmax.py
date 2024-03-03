@@ -85,7 +85,7 @@ loss = nn.CrossEntropyLoss(reduction='none')
 
 # source: 3.7.3  优化算法
 trainer = torch.optim.SGD(net.parameters(), lr=0.1)
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- #
 # 5. 训练 & 评估
 
 # source: 3.6.5 分类精度
@@ -158,7 +158,7 @@ def train_ch3(net, train_iter, test_iter, loss, num_epochs, trainer):
     assert train_loss < 0.5, train_loss
     assert train_acc <= 1 and train_acc > 0.7, train_acc
     assert test_acc <= 1 and test_acc > 0.7, test_acc
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------- #
 num_epochs = 10
 # source: 3.7.4 训练
 train_ch3(net, train_iter, test_iter, loss, num_epochs, trainer)
