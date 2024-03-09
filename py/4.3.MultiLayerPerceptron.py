@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Mar  3 11:32:51 2024
-
-@author: CC-i7-11700
-"""
 
 import torch
 import torchvision
