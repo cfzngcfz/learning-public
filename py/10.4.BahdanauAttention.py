@@ -1,36 +1,15 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Feb 24 03:16:20 2024
-
-@author: CC-i7-11700
-"""
 
 import torch, os, zipfile, tarfile, hashlib, requests, collections, math
 from torch import nn
 from torch.utils import data
-
-def try_gpu(i=0):
-    """Return gpu(i) if exists, otherwise return cpu().
-
-    Defined in :numref:`sec_use_gpu`"""
-    if torch.cuda.device_count() >= i + 1:
-        return torch.device(f'cuda:{i}')
-    return torch.device('cpu')
-
-embed_size, num_hiddens, num_layers, dropout = 32, 32, 2, 0.1
-batch_size, num_steps = 64, 10
-lr, num_epochs, device = 0.005, 250, try_gpu()
-
-# ----------------------------------------------------------------------------
 
 DATA_HUB = dict()
 DATA_URL = 'http://d2l-data.s3-accelerate.amazonaws.com/'
 DATA_HUB['fra-eng'] = (DATA_URL + 'fra-eng.zip', '94646ad1522d915e7b0f9296181140edcf86a4f5')
 
 def download(name, cache_dir=os.path.join('..', 'data')):
-    """Download a file inserted into DATA_HUB, return the local filename.
-
-    Defined in :numref:`sec_kaggle_house`"""
+    """Download a file inserted into DATA_HUB, return the local filename."""
     assert name in DATA_HUB, f"{name} does not exist in {DATA_HUB}."
     url, sha1_hash = DATA_HUB[name]
     os.makedirs(cache_dir, exist_ok=True)
@@ -52,9 +31,7 @@ def download(name, cache_dir=os.path.join('..', 'data')):
     return fname
 
 def download_extract(name, folder=None):
-    """Download and extract a zip/tar file.
-
-    Defined in :numref:`sec_kaggle_house`"""
+    """Download and extract a zip/tar file."""
     fname = download(name)
     base_dir = os.path.dirname(fname)
     data_dir, ext = os.path.splitext(fname)
@@ -68,17 +45,13 @@ def download_extract(name, folder=None):
     return os.path.join(base_dir, folder) if folder else data_dir
 
 def read_data_nmt():
-    """Load the English-French dataset.
-
-    Defined in :numref:`sec_machine_translation`"""
+    """Load the English-French dataset."""
     data_dir = download_extract('fra-eng')
     with open(os.path.join(data_dir, 'fra.txt'), 'r', encoding="UTF-8") as f:
         return f.read()
 
 def preprocess_nmt(text):
-    """Preprocess the English-French dataset.
-
-    Defined in :numref:`sec_machine_translation`"""
+    """Preprocess the English-French dataset."""
     def no_space(char, prev_char):
         return char in set(',.!?') and prev_char != ' '
 
@@ -86,14 +59,11 @@ def preprocess_nmt(text):
     # lowercase ones
     text = text.replace('\u202f', ' ').replace('\xa0', ' ').lower()
     # Insert space between words and punctuation marks
-    out = [' ' + char if i > 0 and no_space(char, text[i - 1]) else char
-           for i, char in enumerate(text)]
+    out = [' ' + char if i > 0 and no_space(char, text[i - 1]) else char for i, char in enumerate(text)]
     return ''.join(out)
 
 def tokenize_nmt(text, num_examples=None):
-    """Tokenize the English-French dataset.
-
-    Defined in :numref:`sec_machine_translation`"""
+    """Tokenize the English-French dataset."""
     source, target = [], []
     for i, line in enumerate(text.split('\n')):
         if num_examples and i > num_examples:
@@ -104,32 +74,20 @@ def tokenize_nmt(text, num_examples=None):
             target.append(parts[1].split(' '))
     return source, target
 
-def count_corpus(tokens):
-    """Count token frequencies.
-
-    Defined in :numref:`sec_text_preprocessing`"""
-    # Here `tokens` is a 1D list or 2D list
-    if len(tokens) == 0 or isinstance(tokens[0], list):
-        # Flatten a list of token lists into a list of tokens
-        tokens = [token for line in tokens for token in line]
-    return collections.Counter(tokens)
 
 class Vocab:
     """Vocabulary for text."""
     def __init__(self, tokens=None, min_freq=0, reserved_tokens=None):
-        """Defined in :numref:`sec_text_preprocessing`"""
         if tokens is None:
             tokens = []
         if reserved_tokens is None:
             reserved_tokens = []
         # Sort according to frequencies
-        counter = count_corpus(tokens)
-        self._token_freqs = sorted(counter.items(), key=lambda x: x[1],
-                                   reverse=True)
+        counter = self.count_corpus(tokens)
+        self._token_freqs = sorted(counter.items(), key=lambda x: x[1], reverse=True)
         # The index for the unknown token is 0
         self.idx_to_token = ['<unk>'] + reserved_tokens
-        self.token_to_idx = {token: idx
-                             for idx, token in enumerate(self.idx_to_token)}
+        self.token_to_idx = {token: idx for idx, token in enumerate(self.idx_to_token)}
         for token, freq in self._token_freqs:
             if freq < min_freq:
                 break
@@ -155,58 +113,64 @@ class Vocab:
         return 0
 
     @property
-    def token_freqs(self):  # Index for the unknown token
+    def token_freqs(self):
         return self._token_freqs
 
+    def count_corpus(self, tokens):
+        """Count token frequencies."""
+        # Here `tokens` is a 1D list or 2D list
+        if len(tokens) == 0 or isinstance(tokens[0], list):
+            # Flatten a list of token lists into a list of tokens
+            tokens = [token for line in tokens for token in line]
+        return collections.Counter(tokens)
 def truncate_pad(line, num_steps, padding_token):
-    """Truncate or pad sequences.
-
-    Defined in :numref:`sec_machine_translation`"""
+    """Truncate or pad sequences."""
     if len(line) > num_steps:
         return line[:num_steps]  # Truncate
     return line + [padding_token] * (num_steps - len(line))  # Pad
 
 def build_array_nmt(lines, vocab, num_steps):
-    """Transform text sequences of machine translation into minibatches.
-
-    Defined in :numref:`subsec_mt_data_loading`"""
-    reduce_sum = lambda x, *args, **kwargs: x.sum(*args, **kwargs)
-    astype = lambda x, *args, **kwargs: x.type(*args, **kwargs)
-
+    """Transform text sequences of machine translation into minibatches."""
+    # reduce_sum = lambda x, *args, **kwargs: x.sum(*args, **kwargs)
+    # astype = lambda x, *args, **kwargs: x.type(*args, **kwargs)
     lines = [vocab[l] for l in lines]
     lines = [l + [vocab['<eos>']] for l in lines]
     array = torch.tensor([truncate_pad(
         l, num_steps, vocab['<pad>']) for l in lines])
-    valid_len = reduce_sum(
-        astype(array != vocab['<pad>'], torch.int32), 1)
+    valid_len = (array != vocab['<pad>']).type(torch.int32).sum(1)
+    # valid_len = reduce_sum(astype(array != vocab['<pad>'], torch.int32), 1) // todo: check
     return array, valid_len
 
 def load_array(data_arrays, batch_size, is_train=True):
-    """Construct a PyTorch data iterator.
-
-    Defined in :numref:`sec_linear_concise`"""
+    """Construct a PyTorch data iterator."""
     dataset = data.TensorDataset(*data_arrays)
     return data.DataLoader(dataset, batch_size, shuffle=is_train)
 
 def load_data_nmt(batch_size, num_steps, num_examples=600):
-    """Return the iterator and the vocabularies of the translation dataset.
-
-    Defined in :numref:`subsec_mt_data_loading`"""
+    """Return the iterator and the vocabularies of the translation dataset."""
     text = preprocess_nmt(read_data_nmt())
     source, target = tokenize_nmt(text, num_examples)
-    src_vocab = Vocab(source, min_freq=2,
-                          reserved_tokens=['<pad>', '<bos>', '<eos>'])
-    tgt_vocab = Vocab(target, min_freq=2,
-                          reserved_tokens=['<pad>', '<bos>', '<eos>'])
+    src_vocab = Vocab(source, min_freq=2, reserved_tokens=['<pad>', '<bos>', '<eos>'])
+    tgt_vocab = Vocab(target, min_freq=2, reserved_tokens=['<pad>', '<bos>', '<eos>'])
     src_array, src_valid_len = build_array_nmt(source, src_vocab, num_steps)
     tgt_array, tgt_valid_len = build_array_nmt(target, tgt_vocab, num_steps)
     data_arrays = (src_array, src_valid_len, tgt_array, tgt_valid_len)
     data_iter = load_array(data_arrays, batch_size)
     return data_iter, src_vocab, tgt_vocab
 
+batch_size, num_steps = 64, 10
 train_iter, src_vocab, tgt_vocab = load_data_nmt(batch_size, num_steps)
 
 # ----------------------------------------------------------------------------
+def try_gpu(i=0):
+    """Return gpu(i) if exists, otherwise return cpu()."""
+    if torch.cuda.device_count() >= i + 1:
+        return torch.device(f'cuda:{i}')
+    return torch.device('cpu')
+# ----------------------------------------------------------------------------
+
+embed_size, num_hiddens, num_layers, dropout = 32, 32, 2, 0.1
+lr, num_epochs, device = 0.005, 250, try_gpu()
 
 class Encoder(nn.Module):
     """The base encoder interface for the encoder-decoder architecture."""
