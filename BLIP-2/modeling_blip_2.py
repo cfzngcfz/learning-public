@@ -386,131 +386,144 @@ class Blip2PreTrainedModel(PreTrainedModel):
             module.gradient_checkpointing = value
 
 
-# BLIP_2_START_DOCSTRING 是一个包含模型说明文档的字符串常量, 描述了该模型的继承关系和参数信息
 BLIP_2_START_DOCSTRING = r"""
+    # 启动文档字符串
     This model inherits from [`PreTrainedModel`]. Check the superclass documentation for the generic methods the
     library implements for all its model (such as downloading or saving, resizing the input embeddings, pruning heads
     etc.)
-
+    # 此模型继承自 [`PreTrainedModel`]. 请查看超类文档, 了解该库为其所有模型实现的通用方法(例如下载或保存、调整输入嵌入的大小、修剪头等)
     This model is also a PyTorch [torch.nn.Module](https://pytorch.org/docs/stable/nn.html#torch.nn.Module) subclass.
     Use it as a regular PyTorch Module and refer to the PyTorch documentation for all matter related to general usage
     and behavior.
-
+    # 此模型也是 PyTorch [torch.nn.Module](https://pytorch.org/docs/stable/nn.html#torch.nn.Module) 子类. 
+    # 将其用作常规 PyTorch 模块, 并参阅 PyTorch 文档, 以了解与通用用法和行为相关的所有事项.
     Parameters:
         config ([`Blip2Config`]): Model configuration class with all the parameters of the model.
             Initializing with a config file does not load the weights associated with the model, only the
             configuration. Check out the [`~PreTrainedModel.from_pretrained`] method to load the model weights.
+        # config ([`Blip2Config`]): 模型配置类, 及模型所有参数.
+            # 使用配置文件初始化, 该文件不会加载与模型相关的权重, 只有配置. 查看 [`~PreTrainedModel.from_pretrained`] 方法, 以加载模型权重.
 """
 
-# BLIP_2_VISION_INPUTS_DOCSTRING 是一个包含视觉输入说明文档的字符串常量
 BLIP_2_VISION_INPUTS_DOCSTRING = r"""
+    # 视觉输入的文档字符串
     Args:
         pixel_values (`torch.FloatTensor` of shape `(batch_size, num_channels, height, width)`):
             Pixel values. Pixel values can be obtained using [`Blip2Processor`]. See [`Blip2Processor.__call__`] for
             details.
+            # 像素值. 可以使用 [`Blip2Processor`] 获取像素值. 有关详细信息, 请参阅 [`Blip2Processor.__call__`].
         output_attentions (`bool`, *optional*):
             Whether or not to return the attentions tensors of all attention layers. See `attentions` under returned
             tensors for more detail.
+            # 是否返回所有注意力层的注意力张量. 有关更多详细信息, 请参阅返回张量中的 `attentions`.
         output_hidden_states (`bool`, *optional*):
             Whether or not to return the hidden states of all layers. See `hidden_states` under returned tensors for
             more detail.
+            # 是否返回所有层的隐藏状态. 有关更多详细信息, 请参阅返回张量中的 `hidden_states`.
         return_dict (`bool`, *optional*):
             Whether or not to return a [`~utils.ModelOutput`] instead of a plain tuple.
+            # 是否返回 [`~utils.ModelOutput`] 而不是普通元组.
 """
 
-# BLIP_2_TEXT_INPUTS_DOCSTRING 是一个包含文本输入说明文档的字符串常量, 描述了输入参数的类型和作用
-BLIP_2_TEXT_INPUTS_DOCSTRING = r"""
+BLIP_2_TEXT_INPUTS_DOCSTRING = r""" 
+    # 文本输入的文档字符串
     Args:
         input_ids (`torch.LongTensor` of shape `(batch_size, sequence_length)`):
             Indices of input sequence tokens in the vocabulary. Padding will be ignored by default should you provide
             it. Indices can be obtained using [`AutoTokenizer`]. See [`PreTrainedTokenizer.encode`] and
             [`PreTrainedTokenizer.__call__`] for details. [What are input IDs?](../glossary#input-ids)
-            # 输入序列标记在词汇表中的索引。默认情况下，将忽略填充。可以使用 AutoTokenizer 获取这些索引。
-            # 有关输入 ID 的详细信息，请参阅 PreTrainedTokenizer.encode 和 PreTrainedTokenizer.__call__。
+            # 输入序列词元在词汇表中的索引. 如果您提供填充, 否则默认情况下, 将忽略填充. 可以使用 AutoTokenizer 获取这些索引.
+            # 请参阅 [`PreTrainedTokenizer.encode`] 和 [`PreTrainedTokenizer.__call__`] 了解详情. [什么是输入 ID?](../glossary#input-ids)
         attention_mask (`torch.Tensor` of shape `(batch_size, sequence_length)`, *optional*):
             Mask to avoid performing attention on padding token indices. Mask values selected in `[0, 1]`:
             - 1 for tokens that are **not masked**,
             - 0 for tokens that are **masked**.
             [What are attention masks?](../glossary#attention-mask)
-            # 避免在填充标记索引上执行注意力的掩码。掩码值选在 `[0, 1]`：
-            # - 1 表示**未被掩码**的标记，
-            # - 0 表示**被掩码**的标记。
+            # 掩码避免对填充词元索引执行注意. 掩码值在`[0, 1]`中选取:
+            # - 1 表示**未被掩码**的词元, 
+            # - 0 表示**被掩码**的词元.
+            # [什么是注意掩码?](../glossary#attention-mask)
         decoder_input_ids (`torch.LongTensor` of shape `(batch_size, target_sequence_length)`, *optional*):
             Indices of decoder input sequence tokens in the vocabulary.
-
+            # 解码器输入序列词元在词汇表中的索引.
             Indices can be obtained using [`AutoTokenizer`]. See [`PreTrainedTokenizer.encode`] and
             [`PreTrainedTokenizer.__call__`] for details.
-
+            # 可以使用 [`AutoTokenizer`] 获取索引. 有关详细信息, 请参阅 [`PreTrainedTokenizer.encode`] 和 [`PreTrainedTokenizer.__call__`].
             [What are decoder input IDs?](../glossary#decoder-input-ids)
-
+            # [什么是解码器输入 ID?](../glossary#decoder-input-ids)
             T5 uses the `pad_token_id` as the starting token for `decoder_input_ids` generation. If `past_key_values`
             is used, optionally only the last `decoder_input_ids` have to be input (see `past_key_values`).
-
+            # T5 使用 `pad_token_id` 作为起始词元用于 `decoder_input_ids` 的生成. 
+            # 如果使用 `past_key_values`, 则可选地只有最后一个 `decoder_input_ids` 必须输入 (参见 `past_key_values`).
             To know more on how to prepare `decoder_input_ids` for pretraining take a look at [T5
             Training](./t5#training).
-            # 解码器输入序列标记在词汇表中的索引。
-            # 可以使用 AutoTokenizer 获取这些索引。
-            # T5 使用 `pad_token_id` 作为 `decoder_input_ids` 生成的起始标记。
-            # 如果使用 `past_key_values`，可以选择仅输入最后的 `decoder_input_ids`。
+            # 要了解如何准备 `decoder_input_ids` 进行预训练, 请查看[T5 训练](./t5#training).
         decoder_attention_mask (`torch.BoolTensor` of shape `(batch_size, target_sequence_length)`, *optional*):
             Default behavior: generate a tensor that ignores pad tokens in `decoder_input_ids`. Causal mask will also
             be used by default.
-            # 默认行为：生成一个忽略 `decoder_input_ids` 中填充标记的张量。默认还将使用因果掩码。
+            # 默认行为：生成一个张量, 它忽略 `decoder_input_ids` 中的填充词元. 默认情况下也将使用因果掩码.
         output_attentions (`bool`, *optional*):
             Whether or not to return the attentions tensors of all attention layers. See `attentions` under returned
             tensors for more detail.
-            # 是否返回所有注意力层的注意力张量。有关更多详细信息，请参阅返回张量中的 `attentions`。
+            # 是否返回所有注意力层的注意力张量. 有关更多详细信息, 请参阅返回张量中的 `attentions`.
         output_hidden_states (`bool`, *optional*):
             Whether or not to return the hidden states of all layers. See `hidden_states` under returned tensors for
             more detail.
-            # 是否返回所有层的隐藏状态。有关更多详细信息，请参阅返回张量中的 `hidden_states`。
+            # 是否返回所有层的隐藏状态. 有关更多详细信息, 请参阅返回张量中的 `hidden_states`.
         return_dict (`bool`, *optional*):
             Whether or not to return a [`~utils.ModelOutput`] instead of a plain tuple.
-            # 是否返回一个 `~utils.ModelOutput` 而不是一个普通元组。
+            # 是否返回 [`~utils.ModelOutput`] 而不是普通元组.
 """
 
 BLIP_2_INPUTS_DOCSTRING = r"""
+    # 输入的文档字符串
     Args:
         pixel_values (`torch.FloatTensor` of shape `(batch_size, num_channels, height, width)`):
             Pixel values. Pixel values can be obtained using [`Blip2Processor`]. See [`Blip2Processor.__call__`] for
             details.
-
+            # 像素值. 可以使用 [`Blip2Processor`] 获取像素值. 有关详细信息, 请参阅 [`Blip2Processor.__call__`].
         input_ids (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
             Indices of input sequence tokens in the vocabulary of the language model. Input tokens can optionally be
             provided to serve as text prompt, which the language model can continue.
-
+            # 输入序列词元在语言模型词汇表中的索引. 可以选择性地提供输入词元作为文本提示, 语言模型可以继续执行该提示.
             Indices can be obtained using [`Blip2Processor`]. See [`Blip2Processor.__call__`] for details.
-
+            # 可以使用 [`Blip2Processor`] 获取索引. 有关详细信息, 请参阅 [`Blip2Processor.__call__`].
             [What are input IDs?](../glossary#input-ids)
+            # [什么是输入 ID?](../glossary#input-ids)
         attention_mask (`torch.Tensor` of shape `(batch_size, sequence_length)`, *optional*):
             Mask to avoid performing attention on padding token indices. Mask values selected in `[0, 1]`:
-
+            # 掩码避免对填充词元索引执行注意. 掩码值在`[0, 1]`中选取:
             - 1 for tokens that are **not masked**,
             - 0 for tokens that are **masked**.
-
+            # - 1 表示**未被掩码**的词元, 
+            # - 0 表示**被掩码**的词元.
             [What are attention masks?](../glossary#attention-mask)
-
+            # [什么是注意掩码?](../glossary#attention-mask)
         decoder_input_ids (`torch.LongTensor` of shape `(batch_size, target_sequence_length)`, *optional*):
             Indices of decoder input sequence tokens in the vocabulary of the language model. Only relevant in case an
             encoder-decoder language model (like T5) is used.
-
+            # 解码器输入序列词元在语言模型词汇表中的索引. 仅在使用编码器-解码器语言模型(如 T5)时应用.
             Indices can be obtained using [`AutoTokenizer`]. See [`PreTrainedTokenizer.encode`] and
             [`PreTrainedTokenizer.__call__`] for details. [What are decoder input IDs?](../glossary#decoder-input-ids)
-
+            # 可以使用 [`AutoTokenizer`] 获取索引. 有关详细信息，请参阅 [`PreTrainedTokenizer.encode`] 和 [`PreTrainedTokenizer.__call__`]. 
+            # [什么是解码器输入 ID?](../glossary#decoder-input-ids)
         decoder_attention_mask (`torch.BoolTensor` of shape `(batch_size, target_sequence_length)`, *optional*):
             Default behavior: generate a tensor that ignores pad tokens in `decoder_input_ids`. Causal mask will also
             be used by default.
-
+            # 默认行为：生成一个张量, 它忽略 `decoder_input_ids` 中的填充词元. 默认情况下也将使用因果掩码.
             Only relevant in case an encoder-decoder language model (like T5) is used.
-
+            # 仅在使用编码器-解码器语言模型(如 T5)时应用.
         output_attentions (`bool`, *optional*):
             Whether or not to return the attentions tensors of all attention layers. See `attentions` under returned
             tensors for more detail.
+            # 是否返回所有注意力层的注意力张量. 有关更多详细信息, 请参阅返回张量中的 `attentions`.
         output_hidden_states (`bool`, *optional*):
             Whether or not to return the hidden states of all layers. See `hidden_states` under returned tensors for
             more detail.
+            # 是否返回所有层的隐藏状态. 有关更多详细信息, 请参阅返回张量中的 `hidden_states`.
         return_dict (`bool`, *optional*):
             Whether or not to return a [`~utils.ModelOutput`] instead of a plain tuple.
+            # 是否返回 [`~utils.ModelOutput`] 而不是普通元组.
 """
 
 
