@@ -144,7 +144,7 @@ def build_array_nmt(lines, vocab, num_steps):
         l, num_steps, vocab['<pad>']) for l in lines])
     alid_len = (array != vocab['<pad>']).type(torch.int32).sum(1)
     # valid_len = reduce_sum(astype(array != vocab['<pad>'], torch.int32), 1)
-    return array, valid_len
+    return array, alid_len
 
 def load_array(data_arrays, batch_size, is_train=True):
     """Construct a PyTorch data iterator."""
